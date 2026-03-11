@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Oswald:wght@400;700&family=Cormorant+Garamond:ital,wght@1,300;1,600&family=Playfair+Display:ital,wght@1,400;1,700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Oswald", sans-serif;
+  --font-serif: "Cormorant Garamond", serif;
+  --font-quote: "Playfair Display", serif;
+  --color-brand: #ff4040;
+  --color-brand-dark: #cc0000;
+}
+
+@layer base {
+  body {
+    @apply bg-[#050505] text-white antialiased selection:bg-brand selection:text-white;
+  }
+}
+
+.noise {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  content: "";
+  opacity: 0.03;
+  z-index: 9999;
+  pointer-events: none;
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+}
+
+.container-custom {
+  @apply max-w-7xl mx-auto px-6;
+}
+
+.glass-card {
+  @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl transition-all duration-500 hover:bg-white/10 hover:border-white/20;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-b from-white to-white/40;
+}
+
+.btn-premium {
+  @apply relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-200 bg-brand rounded-full hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand;
+}
+
+.btn-secondary {
+  @apply inline-flex items-center justify-center px-6 py-3 border border-white/20 rounded-full text-white no-underline hover:bg-white hover:text-black transition-all duration-300 text-sm font-medium backdrop-blur-sm;
+}
+
+@keyframes aurora {
+  0% {
+    transform: scale(0.9) rotate(-5deg);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.4) rotate(5deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0.9) rotate(-5deg);
+    opacity: 0.4;
+  }
+}
+
+.aurora-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(34, 197, 94, 0.8) 0%,   /* Bright Green */
+    rgba(16, 185, 129, 0.6) 30%,  /* Emerald */
+    rgba(6, 182, 212, 0.4) 60%,   /* Cyan */
+    rgba(139, 92, 246, 0.3) 100%  /* Violet */
+  );
+  animation: aurora 12s ease-in-out infinite;
+  filter: blur(110px);
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+
+.text-justify-last {
+  text-align: justify;
+  text-align-last: justify;
+}
