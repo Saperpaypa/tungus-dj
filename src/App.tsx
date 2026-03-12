@@ -96,6 +96,10 @@ export default function App() {
   const { scrollY } = useScroll();
   const navBg = useTransform(scrollY, [0, 100], ["rgba(5, 5, 5, 0)", "rgba(5, 5, 5, 0.8)"]);
   const navBlur = useTransform(scrollY, [0, 100], ["blur(0px)", "blur(12px)"]);
+  const [pastHero, setPastHero] = useState(false);
+  useEffect(() => {
+    return scrollY.on('change', v => setPastHero(v > 400));
+  }, [scrollY]);
 
   return (
     <div className="relative min-h-screen bg-[#050505] overflow-x-hidden">
@@ -119,23 +123,63 @@ export default function App() {
             {['Обо мне', 'Достижения', 'Галерея', 'Лайв'].map((item, idx) => {
               const links = ['about', 'achievements', 'gallery', 'live'];
               return (
-                <a 
-                  key={item} 
-                  href={`#${links[idx]}`} 
+                <a
+                  key={item}
+                  href={`#${links[idx]}`}
                   className="text-xs uppercase tracking-widest font-bold text-white/60 hover:text-brand transition-colors"
                 >
                   {item}
                 </a>
               );
             })}
+            <AnimatePresence>
+              {pastHero && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={() => {
+                    if (audioRef.current) {
+                      isPlaying ? audioRef.current.pause() : audioRef.current.play();
+                      setIsPlaying(!isPlaying);
+                    }
+                  }}
+                  className="flex items-center gap-2 bg-white/10 hover:bg-brand/80 text-white rounded-full px-4 py-2 transition-colors"
+                >
+                  {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
+                  {isPlaying ? <Equalizer /> : <span className="text-[10px] uppercase tracking-widest font-bold">Играть</span>}
+                </motion.button>
+              )}
+            </AnimatePresence>
             <a href={content.hero.contacts[0].url} className="btn-premium !py-2 !px-6 text-xs">
               Забронировать
             </a>
           </div>
 
-          <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X /> : <Menu />}
-          </button>
+          <div className="md:hidden flex items-center gap-3">
+            <AnimatePresence>
+              {pastHero && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={() => {
+                    if (audioRef.current) {
+                      isPlaying ? audioRef.current.pause() : audioRef.current.play();
+                      setIsPlaying(!isPlaying);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 bg-white/10 hover:bg-brand/80 text-white rounded-full px-3 py-2 transition-colors"
+                >
+                  {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
+                  {isPlaying && <Equalizer />}
+                </motion.button>
+              )}
+            </AnimatePresence>
+            <button className="text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X /> : <Menu />}
+            </button>
+          </div>
         </div>
       </motion.nav>
 
@@ -430,7 +474,15 @@ export default function App() {
                       />
                       <div
                         className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 cursor-pointer"
-                        onClick={() => item.embedUrl && setPlayingIdx(idx)}
+                        onClick={() => {
+                          if (item.embedUrl) {
+                            setPlayingIdx(idx);
+                            if (audioRef.current && isPlaying) {
+                              audioRef.current.pause();
+                              setIsPlaying(false);
+                            }
+                          }
+                        }}
                       >
                         <div className="w-20 h-20 bg-brand rounded-full flex items-center justify-center scale-75 group-hover:scale-100 transition-transform duration-500">
                           <Play className="w-8 h-8 text-white fill-current" />
