@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
+import { motion, useScroll, useTransform, AnimatePresence, useMotionValue, animate } from 'motion/react';
 import { ExternalLink, Phone, Instagram, Send, Facebook, ArrowRight, Play, Volume2, Menu, X, Pause, Download } from 'lucide-react';
 import { content } from './content';
 
@@ -59,11 +59,40 @@ const TungusHover = ({ className, showDot = false }: { className?: string, showD
   );
 };
 
+const Equalizer = () => (
+  <span className="inline-flex items-end gap-[3px] h-5 ml-2">
+    {[0.4, 0.7, 1, 0.6, 0.85].map((h, i) => (
+      <motion.span
+        key={i}
+        className="w-[3px] bg-brand rounded-full"
+        animate={{ scaleY: [h, 1, 0.3, h] }}
+        transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.1, ease: 'easeInOut' }}
+        style={{ height: '100%', transformOrigin: 'bottom' }}
+      />
+    ))}
+  </span>
+);
+
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [swipeDir, setSwipeDir] = useState(1);
+  const dragX = useMotionValue(0);
+  const dragRotate = useTransform(dragX, [-250, 250], [-18, 18]);
+
+  useEffect(() => {
+    document.body.style.overflow = lightboxIdx !== null ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [lightboxIdx]);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const lightboxGallery = content.gallery.filter((_, i) => i !== content.gallery.length - 1);
+  const lightboxImg = lightboxIdx !== null ? lightboxGallery[lightboxIdx] : null;
+
+  const lightboxPrev = () => { setSwipeDir(-1); setLightboxIdx(i => i !== null ? (i - 1 + lightboxGallery.length) % lightboxGallery.length : null); };
+  const lightboxNext = () => { setSwipeDir(1); setLightboxIdx(i => i !== null ? (i + 1) % lightboxGallery.length : null); };
   const { scrollY } = useScroll();
   const navBg = useTransform(scrollY, [0, 100], ["rgba(5, 5, 5, 0)", "rgba(5, 5, 5, 0.8)"]);
   const navBlur = useTransform(scrollY, [0, 100], ["blur(0px)", "blur(12px)"]);
@@ -137,9 +166,10 @@ export default function App() {
       <section className="relative pt-40 pb-20 md:pt-64 md:pb-40">
         <div className="container-custom relative z-10">
           <div className="flex flex-col md:flex-row items-center gap-8 lg:gap-16 xl:gap-24">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              style={{ y: useTransform(scrollY, [0, 400], [0, -60]) }}
               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
               className="relative w-full md:w-[260px] lg:w-[320px] xl:w-[400px] flex-shrink-0"
             >
@@ -291,15 +321,15 @@ export default function App() {
             </h3>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-4 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-none">
             {content.achievements.items.map((item, idx) => (
-              <motion.div 
+              <motion.div
                 key={idx}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.2 }}
-                className="glass-card p-10 group"
+                className="glass-card p-8 group flex-none w-[78vw] md:w-auto snap-center"
               >
                 <div className="relative w-full aspect-square mb-10 overflow-hidden rounded-2xl">
                   <img 
@@ -329,15 +359,16 @@ export default function App() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {content.gallery.map((img, idx) => (
-              <motion.div 
+              <motion.div
                 key={idx}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className={`relative overflow-hidden rounded-3xl group ${
+                className={`relative overflow-hidden rounded-3xl group cursor-pointer ${
                   idx === 0 ? 'md:col-span-2 md:row-span-2' : ''
                 } ${idx === content.gallery.length - 1 ? 'hidden md:block' : ''}`}
+                onClick={() => idx !== content.gallery.length - 1 && setLightboxIdx(idx)}
               >
                 <img
                   src={img}
@@ -345,7 +376,7 @@ export default function App() {
                   className="w-full h-full object-cover md:grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
                   referrerPolicy="no-referrer"
                 />
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end justify-center pb-6">
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 hidden md:flex items-end justify-center pb-6">
                   <a
                     href={img}
                     download
@@ -410,7 +441,10 @@ export default function App() {
                 </div>
                 <div className="flex justify-between items-start gap-8">
                   <div>
-                    <h4 className="text-3xl font-bold mb-4 tracking-tight group-hover:text-brand transition-colors">{item.title}</h4>
+                    <h4 className="text-3xl font-bold mb-4 tracking-tight group-hover:text-brand transition-colors flex items-center">
+                      {item.title}
+                      {playingIdx === idx && <Equalizer />}
+                    </h4>
                     <p className="text-zinc-500 font-light leading-relaxed mb-8">{item.description}</p>
                     <a 
                       href={item.url} 
@@ -460,6 +494,57 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxIdx !== null && lightboxImg && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+            onClick={() => setLightboxIdx(null)}
+          >
+            <AnimatePresence mode="wait" custom={swipeDir} onExitComplete={() => dragX.set(0)}>
+              <motion.img
+                key={lightboxIdx}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.7}
+                style={{ x: dragX, rotate: dragRotate }}
+                initial={{ opacity: 0, x: swipeDir * 300 }}
+                animate={{ opacity: 1, x: 0, transition: { type: 'spring', stiffness: 300, damping: 30 } }}
+                exit={{ opacity: 0, x: swipeDir * -350, rotate: swipeDir * -15, transition: { duration: 0.25 } }}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -80) lightboxNext();
+                  else if (info.offset.x > 80) lightboxPrev();
+                  else animate(dragX, 0, { type: 'spring', stiffness: 500, damping: 35 });
+                }}
+                src={lightboxImg}
+                className="max-w-full max-h-full object-contain rounded-2xl cursor-grab active:cursor-grabbing select-none"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </AnimatePresence>
+            <button
+              className="absolute top-5 right-5 bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-colors"
+              onClick={() => setLightboxIdx(null)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <a
+              href={lightboxImg}
+              download
+              className="absolute bottom-5 right-5 bg-white/10 hover:bg-white/20 text-white rounded-full p-3 transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Download className="w-6 h-6" />
+            </a>
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 text-white/40 text-xs">
+              {lightboxIdx + 1} / {lightboxGallery.length}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
