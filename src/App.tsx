@@ -5,8 +5,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, useMotionValue, animate } from 'motion/react';
-import { ExternalLink, Phone, Instagram, Send, Facebook, ArrowRight, Play, Volume2, Menu, X, Pause, Download } from 'lucide-react';
+import { ExternalLink, Phone, Instagram, Send, Facebook, ArrowRight, Play, Menu, X, Pause, Download } from 'lucide-react';
 import { content } from './content';
+import CDJPlayButton from './components/CDJPlayButton';
 
 const IconMap: Record<string, React.ReactNode> = {
   "Instagram": <Instagram className="w-4 h-4" />,
@@ -59,6 +60,31 @@ const TungusHover = ({ className, showDot = false }: { className?: string, showD
   );
 };
 
+
+const SyncButton = ({ href }: { href: string }) => {
+  const [isPressed, setIsPressed] = React.useState(false);
+  return (
+    <a
+      href={href}
+      onPointerDown={() => setIsPressed(true)}
+      onPointerUp={() => setIsPressed(false)}
+      onPointerLeave={() => setIsPressed(false)}
+      style={{
+        display: 'block', flexShrink: 0, borderRadius: 12, overflow: 'hidden',
+        transform: isPressed ? 'scale(0.96)' : 'scale(1)',
+        transition: 'transform 0.1s ease',
+        boxShadow: '0 0 6px 1px rgba(80,180,220,0.18), 0 2px 8px rgba(0,0,0,0.5)',
+      }}
+    >
+      <img
+        src="/sync-button.jpg"
+        alt="SYNC"
+        style={{ display: 'block', height: 30, width: 'auto', pointerEvents: 'none' }}
+      />
+    </a>
+  );
+};
+
 const Equalizer = () => (
   <span className="inline-flex items-end gap-[3px] h-5 ml-2">
     {[0.4, 0.7, 1, 0.6, 0.85].map((h, i) => (
@@ -76,6 +102,7 @@ const Equalizer = () => (
 export default function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPhotoHovered, setIsPhotoHovered] = useState(false);
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [swipeDir, setSwipeDir] = useState(1);
@@ -102,8 +129,26 @@ export default function App() {
   }, [scrollY]);
 
   return (
-    <div className="relative min-h-screen bg-[#050505] overflow-x-hidden">
+    <div className="relative min-h-screen bg-[#050505]" style={{ overflowX: 'clip' }}>
       <div className="noise" />
+
+      {/* Global green ambient — visible on dark sections when playing */}
+      <motion.div
+        className="fixed inset-0 pointer-events-none -z-10"
+        animate={{ opacity: isPlaying ? 1 : 0 }}
+        transition={{ duration: 1.2, ease: 'easeInOut' }}
+        style={{
+          background: 'radial-gradient(ellipse 80% 60% at 50% 20%, rgba(0,255,65,0.05) 0%, transparent 70%)',
+        }}
+      />
+      <motion.div
+        className="fixed inset-0 pointer-events-none -z-10"
+        animate={{ opacity: isPlaying ? 1 : 0, scale: isPlaying ? [1, 1.04, 1] : 1 }}
+        transition={{ opacity: { duration: 1.2 }, scale: { duration: 4, repeat: Infinity, ease: 'easeInOut' } }}
+        style={{
+          background: 'radial-gradient(ellipse 60% 80% at 80% 60%, rgba(0,255,65,0.03) 0%, transparent 60%)',
+        }}
+      />
       
       {/* Navigation */}
       <motion.nav 
@@ -144,16 +189,15 @@ export default function App() {
                       setIsPlaying(!isPlaying);
                     }
                   }}
-                  className="flex items-center gap-2 bg-white/10 hover:bg-brand/80 text-white rounded-full px-4 py-2 transition-colors"
+                  className="flex items-center gap-2 text-white rounded-full px-4 py-2 transition-all duration-300"
+                  style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.15)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.2)' }}
                 >
                   {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
                   {isPlaying ? <Equalizer /> : <span className="text-[10px] uppercase tracking-widest font-bold">Играть</span>}
                 </motion.button>
               )}
             </AnimatePresence>
-            <a href={content.hero.contacts[0].url} className="btn-premium !py-2 !px-6 text-xs">
-              Забронировать
-            </a>
+            <SyncButton href={content.hero.contacts[0].url} />
           </div>
 
           <div className="md:hidden flex items-center gap-3">
@@ -169,7 +213,8 @@ export default function App() {
                       setIsPlaying(!isPlaying);
                     }
                   }}
-                  className="flex items-center gap-1.5 bg-white/10 hover:bg-brand/80 text-white rounded-full px-3 py-2 transition-colors"
+                  className="flex items-center gap-1.5 text-white rounded-full px-3 py-2 transition-all duration-300"
+                  style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(24px)', border: '1px solid rgba(255,255,255,0.15)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.2)' }}
                 >
                   {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
                   {isPlaying && <Equalizer />}
@@ -207,31 +252,66 @@ export default function App() {
       </AnimatePresence>
 
       {/* Hero Section */}
-      <section className="relative pt-40 pb-20 md:pt-64 md:pb-40">
+      <section
+        className="relative pt-24 pb-20 md:pt-40 md:pb-40"
+        style={{
+          filter: isPlaying ? 'none' : 'grayscale(100%)',
+          transition: 'filter 0.8s ease',
+        }}
+      >
         <div className="container-custom relative z-10">
           <div className="flex flex-col md:flex-row items-center gap-8 lg:gap-16 xl:gap-24">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              style={{ y: useTransform(scrollY, [0, 400], [0, -60]) }}
-              transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full md:w-[260px] lg:w-[320px] xl:w-[400px] flex-shrink-0"
+            {/* Wrapper without transform — glow lives here to avoid clipping */}
+            <div
+              className="relative flex flex-col items-center gap-4 w-full md:w-[260px] lg:w-[320px] xl:w-[400px] flex-shrink-0 group/image"
+              onMouseEnter={() => setIsPhotoHovered(true)}
+              onMouseLeave={() => setIsPhotoHovered(false)}
             >
-              <div className="relative group/image">
-                <div className={`absolute -inset-32 transition-opacity duration-1000 pointer-events-none ${isPlaying ? 'opacity-100' : 'opacity-0 group-hover/image:opacity-100'}`}>
-                  <div className={`absolute inset-0 rounded-full ${isPlaying ? 'aurora-glow' : 'bg-brand/20 blur-3xl'}`} />
-                </div>
-                
+              {/* Play hint — fixed height so card doesn't jump on exit */}
+              <div className="h-5 flex items-center justify-center w-full pointer-events-none">
+                <AnimatePresence>
+                  {!isPlaying && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0, transition: { duration: 0.6 } }}
+                      transition={{ delay: 1, duration: 0.8 }}
+                      className="text-white/70 text-xs uppercase tracking-[0.25em] font-bold flex items-center gap-2"
+                    >
+                      Нажми Play
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                        <polygon points="3,1 13,7 3,13" />
+                      </svg>
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className={`absolute -inset-32 transition-opacity duration-1000 pointer-events-none ${isPlaying ? 'opacity-100' : 'opacity-0 group-hover/image:opacity-100'}`}>
+                <div className={`absolute inset-0 rounded-full ${isPlaying ? 'aurora-glow' : 'bg-brand/20 blur-3xl'}`} />
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                style={{ y: useTransform(scrollY, [0, 400], [0, -60]) }}
+                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                className="relative"
+              >
                 <div className="relative overflow-hidden rounded-[2.5rem] aspect-[4/5] border border-white/10 z-10">
-                  <img 
-                    src={content.hero.image} 
+                  <img
+                    src={content.hero.image}
                     alt={content.hero.name}
-                    className={`w-full h-full object-cover transition-all duration-1000 scale-100 group-hover/image:scale-110 ${isPlaying ? 'grayscale-0' : 'grayscale hover:grayscale-0'}`}
+                    className="w-full h-full object-cover transition-all duration-1000"
+                    style={{
+                      transform: isPlaying || isPhotoHovered ? 'scale(1.1)' : 'scale(1)',
+                      transformOrigin: 'center',
+                    }}
                     referrerPolicy="no-referrer"
                   />
-                  <audio 
-                    ref={audioRef} 
-                    src={content.hero.featuredAudio} 
+                  <audio
+                    ref={audioRef}
+                    src={content.hero.featuredAudio}
                     type="audio/mpeg"
                     onEnded={() => setIsPlaying(false)}
                     onError={() => {
@@ -240,32 +320,35 @@ export default function App() {
                       alert("Ошибка: Аудиофайл не найден или пуст. Убедитесь, что вы именно ЗАГРУЗИЛИ (Upload) MP3-файл в папку 'public', а не просто создали пустой файл с таким названием.");
                     }}
                   />
+                  {/* Gravity field wrapper — inside overflow-hidden, clipping is clean */}
+                  <div className="absolute top-4 right-4 z-20" style={{ width: 112, height: 112 }}>
+                    {[0, 1, 2].map(i => (
+                      <motion.div
+                        key={i}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: '50%',
+                          border: '1px solid rgba(255,255,255,0.18)',
+                          pointerEvents: 'none',
+                        }}
+                        animate={{ scale: [1, 2.0], opacity: [0.28, 0.28, 0] }}
+                        transition={{ duration: 3, repeat: Infinity, delay: i * 1, ease: 'easeOut' }}
+                      />
+                    ))}
+                    <CDJPlayButton
+                      isPlaying={isPlaying}
+                      onClick={() => {
+                        if (audioRef.current) {
+                          isPlaying ? audioRef.current.pause() : audioRef.current.play();
+                          setIsPlaying(!isPlaying);
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
-              </div>
-              
-              <motion.button 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                onClick={() => {
-                  if (audioRef.current) {
-                    if (isPlaying) {
-                      audioRef.current.pause();
-                    } else {
-                      audioRef.current.play();
-                    }
-                    setIsPlaying(!isPlaying);
-                  }
-                }}
-                className="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6 bg-brand p-4 md:p-6 rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-20"
-              >
-                {isPlaying ? (
-                  <Pause className="w-8 h-8 text-white" />
-                ) : (
-                  <Volume2 className="w-8 h-8 text-white animate-pulse" />
-                )}
-              </motion.button>
-            </motion.div>
+              </motion.div>
+            </div>
 
             <div className="flex-1 text-center md:text-left flex flex-col items-center md:items-start w-full">
               <motion.div
@@ -301,7 +384,7 @@ export default function App() {
         </div>
 
         {/* Background Text */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full pointer-events-none select-none overflow-hidden opacity-[0.03] -z-10">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full pointer-events-none select-none overflow-hidden -z-10" style={{ opacity: isPlaying ? 0.03 : 0, transition: 'opacity 0.8s ease' }}>
           <h2 className="text-[30vw] font-display font-bold whitespace-nowrap leading-none text-brand">
             TUNGUS TUNGUS TUNGUS
           </h2>
@@ -309,8 +392,12 @@ export default function App() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="pt-24 pb-32 bg-white text-black rounded-[3rem] md:rounded-[5rem] relative z-20">
-        <div className="container-custom">
+      <section id="about" className="pt-10 pb-12 md:pt-20 md:pb-24 text-black rounded-[3rem] md:rounded-[5rem] relative z-20 overflow-hidden" style={{ background: '#f2efe8' }}>
+        {/* Noise texture overlay */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.06]" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")', backgroundSize: '200px' }} />
+        {/* Top accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[3rem] md:rounded-t-[5rem]" style={{ background: 'linear-gradient(to right, transparent 5%, rgba(255,255,255,0.9) 30%, rgba(255,255,255,0.9) 70%, transparent 95%)' }} />
+        <div className="container-custom relative">
           <div className="flex flex-col gap-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -327,7 +414,8 @@ export default function App() {
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl flex-1"
+                className="relative aspect-[4/3] overflow-hidden rounded-3xl flex-1"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6), 0 20px 40px rgba(0,0,0,0.3)' }}
               >
                 <img
                   src={content.photos[1]}
@@ -335,13 +423,16 @@ export default function App() {
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
+                {/* Glass reflection */}
+                <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 50%)' }} />
               </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="relative aspect-[4/3] overflow-hidden rounded-3xl shadow-xl flex-1"
+                className="relative aspect-[4/3] overflow-hidden rounded-3xl flex-1"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6), 0 20px 40px rgba(0,0,0,0.25)' }}
               >
                 <img
                   src={content.photos[0]}
@@ -349,6 +440,8 @@ export default function App() {
                   className="w-full h-full object-cover object-top"
                   referrerPolicy="no-referrer"
                 />
+                {/* Glass reflection */}
+                <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 45%)' }} />
               </motion.div>
             </div>
           </div>
@@ -392,7 +485,7 @@ export default function App() {
       </section>
 
       {/* Gallery Section - Bento Grid */}
-      <section id="gallery" className="py-24 bg-zinc-900/30">
+      <section id="gallery" className="py-24 bg-zinc-900/30 rounded-[3rem] md:rounded-[5rem] relative z-20 overflow-hidden">
         <div className="container-custom">
           <div className="flex flex-col md:flex-row items-end mb-12 gap-8">
             <div className="max-w-xl">

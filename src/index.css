@@ -51,10 +51,31 @@
 
 .btn-premium {
   @apply relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-200 bg-brand rounded-full hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    inset 0 -2px 0 rgba(0,0,0,0.18),
+    0 4px 18px rgba(255,64,64,0.4),
+    0 1px 3px rgba(0,0,0,0.3);
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center px-6 py-3 border border-white/20 rounded-full text-white no-underline hover:bg-white hover:text-black transition-all duration-300 text-sm font-medium backdrop-blur-sm;
+  @apply inline-flex items-center justify-center px-6 py-3 rounded-full text-white no-underline transition-all duration-300 text-sm font-medium;
+  background: rgba(255,255,255,0.07);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.18),
+    inset 0 -1px 0 rgba(0,0,0,0.12),
+    0 4px 14px rgba(0,0,0,0.22);
+}
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.13);
+  border-color: rgba(255,255,255,0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    inset 0 -1px 0 rgba(0,0,0,0.1),
+    0 6px 20px rgba(0,0,0,0.28);
 }
 
 @keyframes aurora {
